@@ -31,6 +31,7 @@ import (
 var (
 	inAnHour       tcclient.Time
 	globalTestName string
+	testQueue      tc.Queue
 	testdataDir    = filepath.Join(cwd, "testdata")
 )
 
@@ -74,6 +75,7 @@ func setupEnvironment(t *testing.T) (teardown func()) {
 	globalTestName = t.Name()
 
 	serviceFactory = &tcmock.ServiceFactory{T: t}
+	testQueue = NewQueue(t)
 
 	return func() {
 		// note for tests that don't submit a task, they will have
@@ -87,7 +89,7 @@ func setupEnvironment(t *testing.T) (teardown func()) {
 		}
 		taskContext = nil
 		globalTestName = ""
-		queue = nil
+		testQueue = nil
 		config = nil
 	}
 }
@@ -191,7 +193,7 @@ func testWorkerType() string {
 }
 
 func NewQueue(t *testing.T) tc.Queue {
-	return serviceFactory.Queue(nil, config.RootURL)
+	return serviceFactory.Queue(nil, "")
 }
 
 func scheduleTask(t *testing.T, td *tcqueue.TaskDefinitionRequest, payload GenericWorkerPayload) (taskID string) {
@@ -225,7 +227,7 @@ func scheduleNamedTask(t *testing.T, td *tcqueue.TaskDefinitionRequest, payload 
 	}
 
 	// submit task
-	_, err := queue.CreateTask(taskID, td)
+	_, err := testQueue.CreateTask(taskID, td)
 	if err != nil {
 		t.Fatalf("Could not submit task: %v", err)
 	}
@@ -281,7 +283,7 @@ func testTask(t *testing.T) *tcqueue.TaskDefinitionRequest {
 }
 
 func getArtifactContent(t *testing.T, taskID string, artifact string) ([]byte, *http.Response, *http.Response, *url.URL) {
-	url, err := queue.GetLatestArtifact_SignedURL(taskID, artifact, 10*time.Minute)
+	url, err := testQueue.GetLatestArtifact_SignedURL(taskID, artifact, 10*time.Minute)
 	if err != nil {
 		t.Fatalf("Error trying to fetch artifacts from Amazon...\n%s", err)
 	}
@@ -311,7 +313,7 @@ func ensureResolution(t *testing.T, taskID, state, reason string) {
 	} else {
 		execute(t, TASKS_COMPLETE)
 	}
-	status, err := queue.Status(taskID)
+	status, err := testQueue.Status(taskID)
 	if err != nil {
 		t.Fatal("Error retrieving status from queue")
 	}
@@ -415,7 +417,7 @@ func CreateArtifactFromFile(t *testing.T, path string, name string) (taskID stri
 	taskID = slugid.Encode(uuid.UUID(v4uuid))
 
 	// See if task already exists
-	tdr, err := queue.Task(taskID)
+	tdr, err := testQueue.Task(taskID)
 	if err != nil {
 		switch e := err.(type) {
 		case *tcclient.APICallException:

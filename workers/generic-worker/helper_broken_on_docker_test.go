@@ -77,7 +77,7 @@ type ExpectedArtifacts map[string]ArtifactTraits
 
 func (expectedArtifacts ExpectedArtifacts) Validate(t *testing.T, taskID string, run int) {
 
-	artifacts, err := queue.ListArtifacts(taskID, strconv.Itoa(run), "", "")
+	artifacts, err := testQueue.ListArtifacts(taskID, strconv.Itoa(run), "", "")
 
 	if err != nil {
 		t.Fatalf("Error listing artifacts: %v", err)

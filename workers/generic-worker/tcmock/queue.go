@@ -10,13 +10,37 @@ import (
 
 type Queue struct {
 	t     *testing.T
-	tasks map[string]*tcqueue.TaskDefinitionRequest
+	tasks map[string]*tcqueue.TaskDefinitionAndStatus
 }
 
 /////////////////////////////////////////////////
 
 func (queue *Queue) ClaimWork(provisionerId, workerType string, payload *tcqueue.ClaimWorkRequest) (*tcqueue.ClaimWorkResponse, error) {
-	return &tcqueue.ClaimWorkResponse{}, nil
+	maxTasks := payload.Tasks
+	tasks := []tcqueue.TaskClaim{}
+	for _, j := range queue.tasks {
+		if j.Task.WorkerType == workerType && j.Task.ProvisionerID == provisionerId && j.Status.State == "pending" {
+			j.Status.State = "running"
+			j.Status.Runs = []tcqueue.RunInformation{
+				{
+					RunID:         0,
+					ReasonCreated: "scheduled",
+				},
+			}
+			tasks = append(
+				tasks,
+				tcqueue.TaskClaim{
+					Task: j.Task,
+				},
+			)
+			if len(tasks) == int(maxTasks) {
+				break
+			}
+		}
+	}
+	return &tcqueue.ClaimWorkResponse{
+		Tasks: tasks,
+	}, nil
 }
 
 func (queue *Queue) CreateArtifact(taskId, runId, name string, payload *tcqueue.PostArtifactRequest) (*tcqueue.PostArtifactResponse, error) {
@@ -24,6 +48,30 @@ func (queue *Queue) CreateArtifact(taskId, runId, name string, payload *tcqueue.
 }
 
 func (queue *Queue) CreateTask(taskId string, payload *tcqueue.TaskDefinitionRequest) (*tcqueue.TaskStatusResponse, error) {
+	queue.tasks[taskId] = &tcqueue.TaskDefinitionAndStatus{
+		Status: tcqueue.TaskStatusStructure{
+			TaskID: taskId,
+		},
+		Task: tcqueue.TaskDefinitionResponse{
+			Created:       payload.Created,
+			Deadline:      payload.Deadline,
+			Dependencies:  payload.Dependencies,
+			Expires:       payload.Expires,
+			Extra:         payload.Extra,
+			Metadata:      payload.Metadata,
+			Payload:       payload.Payload,
+			Priority:      payload.Priority,
+			ProvisionerID: payload.ProvisionerID,
+			Requires:      payload.Requires,
+			Retries:       payload.Retries,
+			Routes:        payload.Routes,
+			SchedulerID:   payload.SchedulerID,
+			Scopes:        payload.Scopes,
+			Tags:          payload.Tags,
+			TaskGroupID:   payload.TaskGroupID,
+			WorkerType:    payload.WorkerType,
+		},
+	}
 	tsr := &tcqueue.TaskStatusResponse{
 		Status: tcqueue.TaskStatusStructure{
 			Deadline:      payload.Deadline,
@@ -70,7 +118,7 @@ func (queue *Queue) Status(taskId string) (*tcqueue.TaskStatusResponse, error) {
 }
 
 func (queue *Queue) Task(taskId string) (*tcqueue.TaskDefinitionResponse, error) {
-	return &tcqueue.TaskDefinitionResponse{}, nil
+	return &queue.tasks[taskId].Task, nil
 }
 
 /////////////////////////////////////////////////
@@ -78,7 +126,7 @@ func (queue *Queue) Task(taskId string) (*tcqueue.TaskDefinitionResponse, error)
 func NewQueue(t *testing.T) *Queue {
 	q := &Queue{
 		t:     t,
-		tasks: map[string]*tcqueue.TaskDefinitionRequest{},
+		tasks: map[string]*tcqueue.TaskDefinitionAndStatus{},
 	}
 	return q
 }

@@ -290,7 +290,7 @@ func TestProtectedArtifactsReplaced(t *testing.T) {
 
 	taskID := submitAndAssert(t, td, payload, "completed", "completed")
 
-	artifacts, err := queue.ListArtifacts(taskID, "0", "", "")
+	artifacts, err := testQueue.ListArtifacts(taskID, "0", "", "")
 
 	if err != nil {
 		t.Fatalf("Error listing artifacts: %v", err)
