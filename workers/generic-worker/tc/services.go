@@ -4,8 +4,31 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcauth"
+	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcpurgecache"
 	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcqueue"
+	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcsecrets"
+	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcworkermanager"
 )
+
+type Auth interface {
+	ExpandScopes(payload *tcauth.SetOfScopes) (*tcauth.SetOfScopes, error)
+	SentryDSN(project string) (*tcauth.SentryDSNResponse, error)
+	WebsocktunnelToken(wstAudience, wstClient string) (*tcauth.WebsocktunnelTokenResponse, error)
+}
+
+type WorkerManager interface {
+	RegisterWorker(payload *tcworkermanager.RegisterWorkerRequest) (*tcworkermanager.RegisterWorkerResponse, error)
+	WorkerPool(workerPoolId string) (*tcworkermanager.WorkerPoolFullDefinition, error)
+}
+
+type PurgeCache interface {
+	PurgeRequests(provisionerId, workerType, since string) (*tcpurgecache.OpenPurgeRequestList, error)
+}
+
+type Secrets interface {
+	Get(name string) (*tcsecrets.Secret, error)
+}
 
 type Queue interface {
 	ClaimWork(provisionerId, workerType string, payload *tcqueue.ClaimWorkRequest) (*tcqueue.ClaimWorkResponse, error)

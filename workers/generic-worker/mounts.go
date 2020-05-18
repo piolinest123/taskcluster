@@ -18,9 +18,9 @@ import (
 	"github.com/taskcluster/httpbackoff/v3"
 	"github.com/taskcluster/slugid-go/slugid"
 	tcclient "github.com/taskcluster/taskcluster/v29/clients/client-go"
-	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcpurgecache"
 	"github.com/taskcluster/taskcluster/v29/internal/scopes"
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/fileutil"
+	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/tc"
 )
 
 var (
@@ -36,7 +36,7 @@ var (
 	directoryCaches CacheMap
 	// service to call to see if any caches need to be purged. See
 	// https://docs.taskcluster.net/reference/core/purge-cache
-	pc *tcpurgecache.PurgeCache
+	pc tc.PurgeCache
 	// we track this in order to reduce number of results we get back from
 	// purge cache service
 	lastQueriedPurgeCacheService time.Time
@@ -157,7 +157,7 @@ func (cm *CacheMap) LoadFromFile(stateFile string, cacheDir string) {
 func (feature *MountsFeature) Initialise() error {
 	fileCaches.LoadFromFile("file-caches.json", config.CachesDir)
 	directoryCaches.LoadFromFile("directory-caches.json", config.DownloadsDir)
-	pc = config.PurgeCache()
+	pc = serviceFactory.PurgeCache(config.Credentials(), config.RootURL)
 	return nil
 }
 

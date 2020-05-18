@@ -59,9 +59,9 @@ var (
 	taskContext = &TaskContext{}
 	// queue is the object we will use for accessing queue api. See
 	// https://docs.taskcluster.net/reference/platform/queue/api-docs
-	queueFactory   func(creds *tcclient.Credentials, rootURL string) tc.Queue
 	queue          tc.Queue
 	config         *gwconfig.Config
+	serviceFactory tc.ServiceFactory
 	configProvider gwconfig.Provider
 	Features       []Feature
 
@@ -162,9 +162,7 @@ func main() {
 			provider = AZURE_PROVIDER
 		}
 
-		queueFactory = func(creds *tcclient.Credentials, rootURL string) tc.Queue {
-			return tcqueue.New(creds, rootURL)
-		}
+		serviceFactory = &tc.ClientFactory{}
 
 		configProvider, err = loadConfig(configFile, provider)
 
@@ -337,7 +335,8 @@ func setupExposer() (err error) {
 			config.WSTAudience,
 			config.WorkerGroup,
 			config.WorkerID,
-			config.Auth())
+			serviceFactory.Auth(config.Credentials(), config.RootURL),
+		)
 	} else if config.LiveLogSecret != "" && config.LiveLogCertificate != "" && config.LiveLogKey != "" {
 		var cert, key []byte
 		cert, err = ioutil.ReadFile(config.LiveLogCertificate)
@@ -450,7 +449,7 @@ func RunWorker() (exitCode ExitCode) {
 	}(&tasksResolved)
 
 	// Queue is the object we will use for accessing queue api
-	queue = config.Queue()
+	queue = serviceFactory.Queue(config.Credentials(), config.RootURL)
 
 	err = initialiseFeatures()
 	if err != nil {
@@ -1018,7 +1017,7 @@ func (task *TaskRun) Run() (err *ExecutionErrors) {
 			log.Printf("Creating task feature %v...", feature.Name())
 			taskFeature := feature.NewTaskFeature(task)
 			requiredScopes := taskFeature.RequiredScopes()
-			scopesSatisfied, scopeValidationErr := scopes.Given(task.Definition.Scopes).Satisfies(requiredScopes, config.Auth())
+			scopesSatisfied, scopeValidationErr := scopes.Given(task.Definition.Scopes).Satisfies(requiredScopes, serviceFactory.Auth(config.Credentials(), config.RootURL))
 			if scopeValidationErr != nil {
 				// presumably we couldn't expand assume:* scopes due to auth
 				// service unavailability

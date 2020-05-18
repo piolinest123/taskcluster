@@ -11,13 +11,7 @@ import (
 	"reflect"
 
 	tcclient "github.com/taskcluster/taskcluster/v29/clients/client-go"
-	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcauth"
-	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcpurgecache"
-	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcqueue"
-	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcsecrets"
-	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcworkermanager"
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/fileutil"
-	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/tc"
 )
 
 type (
@@ -154,26 +148,6 @@ func (c *Config) Credentials() *tcclient.Credentials {
 		ClientID:    c.ClientID,
 		Certificate: c.Certificate,
 	}
-}
-
-func (c *Config) Auth() *tcauth.Auth {
-	return tcauth.New(c.Credentials(), c.RootURL)
-}
-
-func (c *Config) Queue() tc.Queue {
-	return tcqueue.New(c.Credentials(), c.RootURL)
-}
-
-func (c *Config) PurgeCache() *tcpurgecache.PurgeCache {
-	return tcpurgecache.New(c.Credentials(), c.RootURL)
-}
-
-func (c *Config) Secrets() *tcsecrets.Secrets {
-	return tcsecrets.New(c.Credentials(), c.RootURL)
-}
-
-func (c *Config) WorkerManager() *tcworkermanager.WorkerManager {
-	return tcworkermanager.New(c.Credentials(), c.RootURL)
 }
 
 type File struct {
