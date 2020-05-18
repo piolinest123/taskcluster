@@ -31,7 +31,6 @@ import (
 var (
 	inAnHour       tcclient.Time
 	globalTestName string
-	testQueue      tc.Queue
 	testdataDir    = filepath.Join(cwd, "testdata")
 )
 
@@ -74,8 +73,8 @@ func setupEnvironment(t *testing.T) (teardown func()) {
 	inAnHour = tcclient.Time(time.Now().Add(time.Hour * 1))
 	globalTestName = t.Name()
 
-	serviceFactory = &tcmock.ServiceFactory{T: t}
-	testQueue = NewQueue(t)
+	serviceFactory = tcmock.NewServiceFactory(t)
+	queue = NewQueue(t)
 
 	return func() {
 		// note for tests that don't submit a task, they will have
@@ -89,7 +88,7 @@ func setupEnvironment(t *testing.T) (teardown func()) {
 		}
 		taskContext = nil
 		globalTestName = ""
-		testQueue = nil
+		queue = nil
 		config = nil
 	}
 }
@@ -226,7 +225,7 @@ func scheduleNamedTask(t *testing.T, td *tcqueue.TaskDefinitionRequest, payload 
 	}
 
 	// submit task
-	_, err := testQueue.CreateTask(taskID, td)
+	_, err := queue.CreateTask(taskID, td)
 	if err != nil {
 		t.Fatalf("Could not submit task: %v", err)
 	}
@@ -282,7 +281,7 @@ func testTask(t *testing.T) *tcqueue.TaskDefinitionRequest {
 }
 
 func getArtifactContent(t *testing.T, taskID string, artifact string) ([]byte, *http.Response, *http.Response, *url.URL) {
-	url, err := testQueue.GetLatestArtifact_SignedURL(taskID, artifact, 10*time.Minute)
+	url, err := queue.GetLatestArtifact_SignedURL(taskID, artifact, 10*time.Minute)
 	if err != nil {
 		t.Fatalf("Error trying to fetch artifacts from Amazon...\n%s", err)
 	}
@@ -312,7 +311,7 @@ func ensureResolution(t *testing.T, taskID, state, reason string) {
 	} else {
 		execute(t, TASKS_COMPLETE)
 	}
-	status, err := testQueue.Status(taskID)
+	status, err := queue.Status(taskID)
 	if err != nil {
 		t.Fatal("Error retrieving status from queue")
 	}
@@ -416,7 +415,7 @@ func CreateArtifactFromFile(t *testing.T, path string, name string) (taskID stri
 	taskID = slugid.Encode(uuid.UUID(v4uuid))
 
 	// See if task already exists
-	tdr, err := testQueue.Task(taskID)
+	tdr, err := queue.Task(taskID)
 	if err != nil {
 		switch e := err.(type) {
 		case *tcclient.APICallException:

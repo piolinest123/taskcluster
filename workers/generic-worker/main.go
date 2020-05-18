@@ -198,6 +198,8 @@ func main() {
 		//   the current user. In this case we won't change file permissions.
 		secure(configFile.Path)
 
+		queue = serviceFactory.Queue(config.Credentials(), config.RootURL)
+
 		exitCode := RunWorker()
 		log.Printf("Exiting worker with exit code %v", exitCode)
 		switch exitCode {
@@ -422,9 +424,6 @@ func RunWorker() (exitCode ExitCode) {
 		}
 	}(&tasksResolved)
 
-	// Queue is the object we will use for accessing queue api
-	queue = serviceFactory.Queue(config.Credentials(), config.RootURL)
-
 	err = initialiseFeatures()
 	if err != nil {
 		panic(err)
@@ -592,6 +591,7 @@ func ClaimWork() *TaskRun {
 	// Store local clock time when claiming, rather than queue's claim time, to
 	// avoid problems with clock skew.
 	localClaimTime := time.Now()
+	log.Printf("CLAIM WORK: %T", queue)
 	resp, err := queue.ClaimWork(config.ProvisionerID, config.WorkerType, req)
 	if err != nil {
 		log.Printf("Could not claim work. %v", err)

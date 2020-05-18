@@ -8,25 +8,40 @@ import (
 )
 
 type ServiceFactory struct {
-	T *testing.T
+	t             *testing.T
+	auth          tc.Auth
+	queue         tc.Queue
+	secrets       tc.Secrets
+	purgeCache    tc.PurgeCache
+	workerManager tc.WorkerManager
+}
+
+func NewServiceFactory(t *testing.T) *ServiceFactory {
+	return &ServiceFactory{
+		auth:          NewAuth(t),
+		queue:         NewQueue(t),
+		secrets:       NewSecrets(t),
+		purgeCache:    NewPurgeCache(t),
+		workerManager: NewWorkerManager(t),
+	}
 }
 
 func (sf *ServiceFactory) Auth(creds *tcclient.Credentials, rootURL string) tc.Auth {
-	return NewAuth(sf.T)
+	return sf.auth
 }
 
 func (sf *ServiceFactory) Queue(creds *tcclient.Credentials, rootURL string) tc.Queue {
-	return NewQueue(sf.T)
+	return sf.queue
 }
 
 func (sf *ServiceFactory) Secrets(creds *tcclient.Credentials, rootURL string) tc.Secrets {
-	return NewSecrets(sf.T)
+	return sf.secrets
 }
 
 func (sf *ServiceFactory) PurgeCache(creds *tcclient.Credentials, rootURL string) tc.PurgeCache {
-	return NewPurgeCache(sf.T)
+	return sf.purgeCache
 }
 
 func (sf *ServiceFactory) WorkerManager(creds *tcclient.Credentials, rootURL string) tc.WorkerManager {
-	return NewWorkerManager(sf.T)
+	return sf.workerManager
 }

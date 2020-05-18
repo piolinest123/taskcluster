@@ -1,6 +1,7 @@
 package tcmock
 
 import (
+	"log"
 	"net/url"
 	"testing"
 	"time"
@@ -16,6 +17,7 @@ type Queue struct {
 /////////////////////////////////////////////////
 
 func (queue *Queue) ClaimWork(provisionerId, workerType string, payload *tcqueue.ClaimWorkRequest) (*tcqueue.ClaimWorkResponse, error) {
+	log.Printf("ClaimWork called - tasks map size %v", len(queue.tasks))
 	maxTasks := payload.Tasks
 	tasks := []tcqueue.TaskClaim{}
 	for _, j := range queue.tasks {
@@ -30,14 +32,18 @@ func (queue *Queue) ClaimWork(provisionerId, workerType string, payload *tcqueue
 			tasks = append(
 				tasks,
 				tcqueue.TaskClaim{
-					Task: j.Task,
+					Task:   j.Task,
+					Status: j.Status,
 				},
 			)
 			if len(tasks) == int(maxTasks) {
 				break
 			}
+		} else {
+			log.Printf("%v / %v / %v != %v / %v / %v", j.Task.WorkerType, j.Task.ProvisionerID, j.Status.State, workerType, provisionerId, "pending")
 		}
 	}
+	log.Printf("Returning tasks: %v", tasks)
 	return &tcqueue.ClaimWorkResponse{
 		Tasks: tasks,
 	}, nil
@@ -48,9 +54,11 @@ func (queue *Queue) CreateArtifact(taskId, runId, name string, payload *tcqueue.
 }
 
 func (queue *Queue) CreateTask(taskId string, payload *tcqueue.TaskDefinitionRequest) (*tcqueue.TaskStatusResponse, error) {
+	log.Printf("CreateTask called - tasks map size %v", len(queue.tasks))
 	queue.tasks[taskId] = &tcqueue.TaskDefinitionAndStatus{
 		Status: tcqueue.TaskStatusStructure{
 			TaskID: taskId,
+			State:  "pending",
 		},
 		Task: tcqueue.TaskDefinitionResponse{
 			Created:       payload.Created,
@@ -72,6 +80,7 @@ func (queue *Queue) CreateTask(taskId string, payload *tcqueue.TaskDefinitionReq
 			WorkerType:    payload.WorkerType,
 		},
 	}
+	log.Printf("Updated tasks map size %v", len(queue.tasks))
 	tsr := &tcqueue.TaskStatusResponse{
 		Status: tcqueue.TaskStatusStructure{
 			Deadline:      payload.Deadline,
