@@ -58,7 +58,8 @@ var (
 	taskContext = &TaskContext{}
 	// queue is the object we will use for accessing queue api. See
 	// https://docs.taskcluster.net/reference/platform/queue/api-docs
-	queue          *tcqueue.Queue
+	queueFactory   func(creds *tcclient.Credentials, rootURL string) Queue
+	queue          Queue
 	config         *gwconfig.Config
 	configProvider gwconfig.Provider
 	Features       []Feature
@@ -160,6 +161,10 @@ func main() {
 			provider = AZURE_PROVIDER
 		}
 
+		queueFactory = func(creds *tcclient.Credentials, rootURL string) Queue {
+			return tcqueue.New(creds, rootURL)
+		}
+
 		configProvider, err = loadConfig(configFile, provider)
 
 		// We need to persist the generic-worker config file if we fetched it
@@ -243,7 +248,6 @@ func loadConfig(configFile *gwconfig.File, provider Provider) (gwconfig.Provider
 	// only one place if possible (defaults also declared in `usage`)
 	config = &gwconfig.Config{
 		PublicConfig: gwconfig.PublicConfig{
-			AuthRootURL:                    "",
 			CachesDir:                      "caches",
 			CheckForNewDeploymentEverySecs: 1800,
 			CleanUpTaskDirs:                true,
@@ -255,12 +259,9 @@ func loadConfig(configFile *gwconfig.File, provider Provider) (gwconfig.Provider
 			LiveLogPUTPort:                 60022,
 			NumberOfTasksToRun:             0,
 			ProvisionerID:                  "test-provisioner",
-			PurgeCacheRootURL:              "",
-			QueueRootURL:                   "",
 			RequiredDiskSpaceMegabytes:     10240,
 			RootURL:                        "",
 			RunAfterUserCreation:           "",
-			SecretsRootURL:                 "",
 			SentryProject:                  "generic-worker",
 			ShutdownMachineOnIdle:          false,
 			ShutdownMachineOnInternalError: false,
@@ -270,7 +271,6 @@ func loadConfig(configFile *gwconfig.File, provider Provider) (gwconfig.Provider
 			TasksDir:                       defaultTasksDir(),
 			WorkerGroup:                    "test-worker-group",
 			WorkerLocation:                 "",
-			WorkerManagerRootURL:           "",
 			WorkerTypeMetadata:             map[string]interface{}{},
 		},
 	}
@@ -645,10 +645,6 @@ func ClaimWork() *TaskRun {
 			},
 			config.RootURL,
 		)
-		// if queueRootURL is configured, this takes precedence over rootURL
-		if config.QueueRootURL != "" {
-			taskQueue.RootURL = config.QueueRootURL
-		}
 		task := &TaskRun{
 			TaskID:            taskResponse.Status.TaskID,
 			RunID:             uint(taskResponse.RunID),

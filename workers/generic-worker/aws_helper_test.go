@@ -12,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcpurgecache"
 	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcqueue"
 	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcworkermanager"
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/gwconfig"
@@ -46,10 +45,8 @@ func (m *MockAWSProvisionedEnvironment) ValidPublicConfig(t *testing.T) map[stri
 		"numberOfTasksToRun": 1,
 		// should be enough for tests, and travis-ci.org CI environments
 		// don't have a lot of free disk
-		"queueRootURL":               tcqueue.New(nil, os.Getenv("TASKCLUSTER_ROOT_URL")).RootURL,
-		"purgeCacheRootURL":          tcpurgecache.New(nil, os.Getenv("TASKCLUSTER_ROOT_URL")).RootURL,
-		"requiredDiskSpaceMegabytes": 16,
-		// "secretsRootURL":                 "http://localhost:13243/secrets",
+		"requiredDiskSpaceMegabytes":     16,
+		"rootURL":                        tcqueue.New(nil, os.Getenv("TASKCLUSTER_ROOT_URL")).RootURL,
 		"sentryProject":                  "generic-worker-tests",
 		"shutdownMachineOnIdle":          false,
 		"shutdownMachineOnInternalError": false,
@@ -138,7 +135,6 @@ func (m *MockAWSProvisionedEnvironment) userData(t *testing.T, w http.ResponseWr
 		"workerPoolId": "test-provisioner/" + workerType,
 		"providerId":   "test-provider",
 		"workerGroup":  "test-worker-group",
-		// "rootUrl":  os.Getenv("TASKCLUSTER_ROOT_URL"), // don't use tcclient.RootURLFromEnvVars() since we don't want ClientID of CI
 		"rootUrl":      "http://localhost:13243",
 		"workerConfig": data,
 	}

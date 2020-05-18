@@ -111,9 +111,6 @@ and reports back results to the queue.
         ** OPTIONAL ** properties
         =========================
 
-          authRootURL                       The root URL for taskcluster auth API calls.
-                                            If not provided, the value from config property
-                                            rootURL is used. Intended for development/testing.
           availabilityZone                  The EC2 availability zone of the worker.
           cachesDir                         The directory where task caches should be stored on
                                             the worker. The directory will be created if it does
@@ -190,12 +187,6 @@ and reports back results to the queue.
                                             https://github.com/taskcluster/livelog and
                                             https://github.com/taskcluster/stateless-dns-server
                                             Also used by chain of trust when present.
-          purgeCacheRootURL                 The root URL for taskcluster purge cache API calls.
-                                            If not provided, the value from config property
-                                            rootURL is used. Intended for development/testing.
-          queueRootURL                      The root URL for taskcluster queue API calls.
-                                            If not provided, the value from config property
-                                            rootURL is used. Intended for development/testing.
           region                            The EC2 region of the worker. Used by chain of trust.
           requiredDiskSpaceMegabytes        The garbage collector will ensure at least this
                                             number of megabytes of disk space are available
@@ -215,9 +206,6 @@ and reports back results to the queue.
                                             runTasksAsCurrentUser is true, the script will still
                                             be executed as the task user, rather than the
                                             current user (that runs the generic-worker process).` + runTasksAsCurrentUserUsage() + `
-          secretsRootURL                    The root URL for taskcluster secrets API calls.
-                                            If not provided, the value from config property
-                                            rootURL is used. Intended for development/testing.
           sentryProject                     The project name used in https://sentry.io for
                                             reporting worker crashes. Permission to publish
                                             crash reports is granted via the scope
@@ -272,9 +260,6 @@ and reports back results to the queue.
                                             Otherwise TASKCLUSTER_WORKER_LOCATION environment
                                             variable will not be implicitly set in task commands.
                                             [default: ""]
-          workerManagerRootURL              The root URL for taskcluster worker manager API calls.
-                                            If not provided, the value from config property
-                                            rootURL is used. Intended for development/testing.
           workerTypeMetaData                This arbitrary json blob will be included at the
                                             top of each task log. Providing information here,
                                             such as a URL to the code/config used to set up the

@@ -28,7 +28,7 @@ type (
 		logMux         sync.RWMutex
 		logWriter      io.Writer
 		queueMux       sync.RWMutex
-		Queue          *tcqueue.Queue     `json:"-"`
+		Queue          Queue              `json:"-"`
 		StatusManager  *TaskStatusManager `json:"-"`
 		LocalClaimTime time.Time          `json:"-"`
 		// This is a map of artifact names to internal feature names for

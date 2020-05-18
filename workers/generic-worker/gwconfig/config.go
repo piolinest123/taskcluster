@@ -28,7 +28,6 @@ type (
 
 	PublicConfig struct {
 		PublicEngineConfig
-		AuthRootURL                    string                 `json:"authRootURL"`
 		AvailabilityZone               string                 `json:"availabilityZone"`
 		CachesDir                      string                 `json:"cachesDir"`
 		CheckForNewDeploymentEverySecs uint                   `json:"checkForNewDeploymentEverySecs"`
@@ -50,13 +49,10 @@ type (
 		PrivateIP                      net.IP                 `json:"privateIP"`
 		ProvisionerID                  string                 `json:"provisionerId"`
 		PublicIP                       net.IP                 `json:"publicIP"`
-		PurgeCacheRootURL              string                 `json:"purgeCacheRootURL"`
-		QueueRootURL                   string                 `json:"queueRootURL"`
 		Region                         string                 `json:"region"`
 		RequiredDiskSpaceMegabytes     uint                   `json:"requiredDiskSpaceMegabytes"`
 		RootURL                        string                 `json:"rootURL"`
 		RunAfterUserCreation           string                 `json:"runAfterUserCreation"`
-		SecretsRootURL                 string                 `json:"secretsRootURL"`
 		SentryProject                  string                 `json:"sentryProject"`
 		ShutdownMachineOnIdle          bool                   `json:"shutdownMachineOnIdle"`
 		ShutdownMachineOnInternalError bool                   `json:"shutdownMachineOnInternalError"`
@@ -67,7 +63,6 @@ type (
 		WorkerGroup                    string                 `json:"workerGroup"`
 		WorkerID                       string                 `json:"workerId"`
 		WorkerLocation                 string                 `json:"workerLocation"`
-		WorkerManagerRootURL           string                 `json:"workerManagerRootURL"`
 		WorkerType                     string                 `json:"workerType"`
 		WorkerTypeMetadata             map[string]interface{} `json:"workerTypeMetadata"`
 		WSTAudience                    string                 `json:"wstAudience"`
@@ -161,48 +156,23 @@ func (c *Config) Credentials() *tcclient.Credentials {
 }
 
 func (c *Config) Auth() *tcauth.Auth {
-	auth := tcauth.New(c.Credentials(), c.RootURL)
-	// If authRootURL provided, it should take precedence over rootURL
-	if c.AuthRootURL != "" {
-		auth.RootURL = c.AuthRootURL
-	}
-	return auth
+	return tcauth.New(c.Credentials(), c.RootURL)
 }
 
 func (c *Config) Queue() *tcqueue.Queue {
-	queue := tcqueue.New(c.Credentials(), c.RootURL)
-	// If queueRootURL provided, it should take precedence over rootURL
-	if c.QueueRootURL != "" {
-		queue.RootURL = c.QueueRootURL
-	}
-	return queue
+	return tcqueue.New(c.Credentials(), c.RootURL)
 }
 
 func (c *Config) PurgeCache() *tcpurgecache.PurgeCache {
-	purgeCache := tcpurgecache.New(c.Credentials(), c.RootURL)
-	// If purgeCacheRootURL provided, it should take precedence over rootURL
-	if c.PurgeCacheRootURL != "" {
-		purgeCache.RootURL = c.PurgeCacheRootURL
-	}
-	return purgeCache
+	return tcpurgecache.New(c.Credentials(), c.RootURL)
 }
 
 func (c *Config) Secrets() *tcsecrets.Secrets {
-	secrets := tcsecrets.New(c.Credentials(), c.RootURL)
-	// If secretsRootURL provided, it should take precedence over rootURL
-	if c.SecretsRootURL != "" {
-		secrets.RootURL = c.SecretsRootURL
-	}
-	return secrets
+	return tcsecrets.New(c.Credentials(), c.RootURL)
 }
 
 func (c *Config) WorkerManager() *tcworkermanager.WorkerManager {
-	workerManager := tcworkermanager.New(c.Credentials(), c.RootURL)
-	// If workerManagerRootURL provided, it should take precedence over rootURL
-	if c.WorkerManagerRootURL != "" {
-		workerManager.RootURL = c.WorkerManagerRootURL
-	}
-	return workerManager
+	return tcworkermanager.New(c.Credentials(), c.RootURL)
 }
 
 type File struct {

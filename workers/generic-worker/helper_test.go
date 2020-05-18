@@ -24,13 +24,13 @@ import (
 	tcclient "github.com/taskcluster/taskcluster/v29/clients/client-go"
 	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcqueue"
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/gwconfig"
+	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/tcmock"
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/testutil"
 )
 
 var (
 	inAnHour       tcclient.Time
 	globalTestName string
-	testQueue      *tcqueue.Queue
 	testdataDir    = filepath.Join(cwd, "testdata")
 )
 
@@ -73,7 +73,9 @@ func setupEnvironment(t *testing.T) (teardown func()) {
 	inAnHour = tcclient.Time(time.Now().Add(time.Hour * 1))
 	globalTestName = t.Name()
 
-	testQueue = NewQueue(t)
+	queueFactory = func(creds *tcclient.Credentials, rootURL string) Queue {
+		return tcmock.NewQueue(t)
+	}
 
 	return func() {
 		// note for tests that don't submit a task, they will have
@@ -87,7 +89,7 @@ func setupEnvironment(t *testing.T) (teardown func()) {
 		}
 		taskContext = nil
 		globalTestName = ""
-		testQueue = nil
+		queue = nil
 		config = nil
 	}
 }
@@ -103,7 +105,6 @@ func setup(t *testing.T) func() {
 			LiveLogSecret: "xyz",
 		},
 		PublicConfig: gwconfig.PublicConfig{
-			AuthRootURL:      "",
 			AvailabilityZone: "outer-space",
 			// Need common caches directory across tests, since files
 			// directory-caches.json and file-caches.json are not per-test.
@@ -129,8 +130,6 @@ func setup(t *testing.T) func() {
 			PrivateIP:                 net.ParseIP("87.65.43.21"),
 			ProvisionerID:             "test-provisioner",
 			PublicIP:                  net.ParseIP("12.34.56.78"),
-			PurgeCacheRootURL:         "",
-			QueueRootURL:              "",
 			Region:                    "test-worker-group",
 			// should be enough for tests, and travis-ci.org CI environments don't
 			// have a lot of free disk
@@ -234,7 +233,7 @@ func scheduleNamedTask(t *testing.T, td *tcqueue.TaskDefinitionRequest, payload 
 	}
 
 	// submit task
-	_, err := testQueue.CreateTask(taskID, td)
+	_, err := queue.CreateTask(taskID, td)
 	if err != nil {
 		t.Fatalf("Could not submit task: %v", err)
 	}
@@ -290,7 +289,7 @@ func testTask(t *testing.T) *tcqueue.TaskDefinitionRequest {
 }
 
 func getArtifactContent(t *testing.T, taskID string, artifact string) ([]byte, *http.Response, *http.Response, *url.URL) {
-	url, err := testQueue.GetLatestArtifact_SignedURL(taskID, artifact, 10*time.Minute)
+	url, err := queue.GetLatestArtifact_SignedURL(taskID, artifact, 10*time.Minute)
 	if err != nil {
 		t.Fatalf("Error trying to fetch artifacts from Amazon...\n%s", err)
 	}
@@ -320,7 +319,7 @@ func ensureResolution(t *testing.T, taskID, state, reason string) {
 	} else {
 		execute(t, TASKS_COMPLETE)
 	}
-	status, err := testQueue.Status(taskID)
+	status, err := queue.Status(taskID)
 	if err != nil {
 		t.Fatal("Error retrieving status from queue")
 	}
@@ -424,7 +423,7 @@ func CreateArtifactFromFile(t *testing.T, path string, name string) (taskID stri
 	taskID = slugid.Encode(uuid.UUID(v4uuid))
 
 	// See if task already exists
-	tdr, err := testQueue.Task(taskID)
+	tdr, err := queue.Task(taskID)
 	if err != nil {
 		switch e := err.(type) {
 		case *tcclient.APICallException:
