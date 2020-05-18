@@ -35,11 +35,7 @@ type (
 		IdleTimeoutSecs                uint                   `json:"idleTimeoutSecs"`
 		InstanceID                     string                 `json:"instanceId"`
 		InstanceType                   string                 `json:"instanceType"`
-		LiveLogCertificate             string                 `json:"livelogCertificate"`
 		LiveLogExecutable              string                 `json:"livelogExecutable"`
-		LiveLogGETPort                 uint16                 `json:"livelogGETPort"`
-		LiveLogKey                     string                 `json:"livelogKey"`
-		LiveLogPUTPort                 uint16                 `json:"livelogPUTPort"`
 		NumberOfTasksToRun             uint                   `json:"numberOfTasksToRun"`
 		PrivateIP                      net.IP                 `json:"privateIP"`
 		ProvisionerID                  string                 `json:"provisionerId"`
@@ -51,7 +47,6 @@ type (
 		SentryProject                  string                 `json:"sentryProject"`
 		ShutdownMachineOnIdle          bool                   `json:"shutdownMachineOnIdle"`
 		ShutdownMachineOnInternalError bool                   `json:"shutdownMachineOnInternalError"`
-		Subdomain                      string                 `json:"subdomain"`
 		TaskclusterProxyExecutable     string                 `json:"taskclusterProxyExecutable"`
 		TaskclusterProxyPort           uint16                 `json:"taskclusterProxyPort"`
 		TasksDir                       string                 `json:"tasksDir"`
@@ -65,9 +60,8 @@ type (
 	}
 
 	PrivateConfig struct {
-		AccessToken   string `json:"accessToken"`
-		Certificate   string `json:"certificate"`
-		LiveLogSecret string `json:"livelogSecret"`
+		AccessToken string `json:"accessToken"`
+		Certificate string `json:"certificate"`
 	}
 
 	MissingConfigError struct {
@@ -78,7 +72,6 @@ type (
 func (c *Config) String() string {
 	cCopy := *c
 	cCopy.AccessToken = "*************"
-	cCopy.LiveLogSecret = "*************"
 	// This json.Marshal call won't sort all inherited properties
 	// alphabetically, since it sorts properties within each nested struct, but
 	// concatenates the results from each of the nested structs together.
@@ -117,11 +110,8 @@ func (c *Config) Validate() error {
 		{value: c.DownloadsDir, name: "downloadsDir", disallowed: ""},
 		{value: c.Ed25519SigningKeyLocation, name: "ed25519SigningKeyLocation", disallowed: ""},
 		{value: c.LiveLogExecutable, name: "livelogExecutable", disallowed: ""},
-		{value: c.LiveLogPUTPort, name: "livelogPUTPort", disallowed: 0},
-		{value: c.LiveLogGETPort, name: "livelogGETPort", disallowed: 0},
 		{value: c.ProvisionerID, name: "provisionerId", disallowed: ""},
 		{value: c.RootURL, name: "rootURL", disallowed: ""},
-		{value: c.Subdomain, name: "subdomain", disallowed: ""},
 		{value: c.TasksDir, name: "tasksDir", disallowed: ""},
 		{value: c.WorkerGroup, name: "workerGroup", disallowed: ""},
 		{value: c.WorkerID, name: "workerId", disallowed: ""},

@@ -40,7 +40,6 @@ require (
 	github.com/taskcluster/pulse-go v1.0.0
 	github.com/taskcluster/shell v0.0.0-20191115171910-c688067f12d3
 	github.com/taskcluster/slugid-go v1.1.0
-	github.com/taskcluster/stateless-dns-go v1.0.6
 	github.com/taskcluster/taskcluster-lib-urls v13.0.0+incompatible
 	github.com/tent/hawk-go v0.0.0-20161026210932-d341ea318957
 	github.com/ulikunitz/xz v0.5.7 // indirect
@@ -48,8 +47,8 @@ require (
 	github.com/xeipuuv/gojsonschema v1.2.0
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37
 	golang.org/x/net v0.0.0-20200505041828-1ed23360d12c
-	golang.org/x/sys v0.0.0-20200509044756-6aff5f38e54f
-	golang.org/x/tools v0.0.0-20200511202723-1762287ae9dd
+	golang.org/x/sys v0.0.0-20200515095857-1151b9dac4a9
+	golang.org/x/tools v0.0.0-20200515220128-d3bf790afa53
 	gopkg.in/tylerb/graceful.v1 v1.2.15
 	gopkg.in/yaml.v2 v2.2.8
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c
