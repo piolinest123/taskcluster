@@ -102,19 +102,27 @@ func (queue *Queue) ReclaimTask(taskId, runId string) (*tcqueue.TaskReclaimRespo
 }
 
 func (queue *Queue) ReportCompleted(taskId, runId string) (*tcqueue.TaskStatusResponse, error) {
-	return &tcqueue.TaskStatusResponse{}, nil
+	queue.tasks[taskId].Status.Runs[0].ReasonResolved = "completed"
+	queue.tasks[taskId].Status.Runs[0].State = "completed"
+	return queue.Status(taskId)
 }
 
 func (queue *Queue) ReportException(taskId, runId string, payload *tcqueue.TaskExceptionRequest) (*tcqueue.TaskStatusResponse, error) {
-	return &tcqueue.TaskStatusResponse{}, nil
+	queue.tasks[taskId].Status.Runs[0].ReasonResolved = payload.Reason
+	queue.tasks[taskId].Status.Runs[0].State = "exception"
+	return queue.Status(taskId)
 }
 
 func (queue *Queue) ReportFailed(taskId, runId string) (*tcqueue.TaskStatusResponse, error) {
-	return &tcqueue.TaskStatusResponse{}, nil
+	queue.tasks[taskId].Status.Runs[0].ReasonResolved = "failed"
+	queue.tasks[taskId].Status.Runs[0].State = "failed"
+	return queue.Status(taskId)
 }
 
 func (queue *Queue) Status(taskId string) (*tcqueue.TaskStatusResponse, error) {
-	return &tcqueue.TaskStatusResponse{}, nil
+	return &tcqueue.TaskStatusResponse{
+		Status: queue.tasks[taskId].Status,
+	}, nil
 }
 
 func (queue *Queue) Task(taskId string) (*tcqueue.TaskDefinitionResponse, error) {
