@@ -12,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcqueue"
 	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcworkermanager"
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/gwconfig"
 )
@@ -46,7 +45,7 @@ func (m *MockAWSProvisionedEnvironment) ValidPublicConfig(t *testing.T) map[stri
 		// should be enough for tests, and travis-ci.org CI environments
 		// don't have a lot of free disk
 		"requiredDiskSpaceMegabytes":     16,
-		"rootURL":                        tcqueue.New(nil, os.Getenv("TASKCLUSTER_ROOT_URL")).RootURL,
+		"rootURL":                        os.Getenv("TASKCLUSTER_ROOT_URL"),
 		"sentryProject":                  "generic-worker-tests",
 		"shutdownMachineOnIdle":          false,
 		"shutdownMachineOnInternalError": false,

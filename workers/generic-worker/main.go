@@ -611,7 +611,7 @@ func ClaimWork() *TaskRun {
 	default:
 		log.Print("Task found")
 		taskResponse := resp.Tasks[0]
-		taskQueue := tcqueue.New(
+		taskQueue := serviceFactory.Queue(
 			&tcclient.Credentials{
 				ClientID:    taskResponse.Credentials.ClientID,
 				AccessToken: taskResponse.Credentials.AccessToken,
