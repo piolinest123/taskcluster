@@ -343,25 +343,6 @@ be installed.
 Set to a non-empty string if you wish to skip all tests that require
 mozilla-build to be installed.
 
-### `GW_SKIP_INTEGRATION_TESTS`
-
-Set to a non-empty string if you wish to skip all tests that submit tasks to a
-real taskcluster Queue service.
-
-Otherwise you'll need to configure the taskcluster credentials for talking to
-the taskcluster Queue service:
-
-* `TASKCLUSTER_CLIENT_ID`
-* `TASKCLUSTER_ACCESS_TOKEN`
-* `TASKCLUSTER_ROOT_URL`
-* `TASKCLUSTER_CERTIFICATE` (only if using temp credentials)
-
-### `GW_SKIP_PERMA_CREDS_TESTS`
-
-Set to a non-empty string if you wish to skip tests that require permanent
-taskcluster credentials (e.g. if you only have temp credentials, and don't feel
-like creating a permanent client, or don't have the scopes to do so).
-
 ### `GW_SKIP_Z_DRIVE_TESTS`
 
 Only used in a single __Windows-specific__ test - if you don't have a Z: drive

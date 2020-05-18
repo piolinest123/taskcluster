@@ -24,8 +24,8 @@ import (
 	tcclient "github.com/taskcluster/taskcluster/v29/clients/client-go"
 	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcqueue"
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/gwconfig"
+	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/tc"
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/tcmock"
-	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/testutil"
 )
 
 var (
@@ -190,11 +190,8 @@ func testWorkerType() string {
 	return "test-" + strings.ToLower(strings.Replace(slugid.Nice(), "_", "", -1)) + "-a"
 }
 
-func NewQueue(t *testing.T) *tcqueue.Queue {
-	testutil.RequireTaskclusterCredentials(t)
-	// RootURL shouldn't be proxy otherwise requests will use CI clientId
-	// rather than env var TASKCLUSTER_CLIENT_ID
-	return tcqueue.New(tcclient.CredentialsFromEnvVars(), os.Getenv("TASKCLUSTER_ROOT_URL"))
+func NewQueue(t *testing.T) tc.Queue {
+	return serviceFactory.Queue(nil, config.RootURL)
 }
 
 func scheduleTask(t *testing.T, td *tcqueue.TaskDefinitionRequest, payload GenericWorkerPayload) (taskID string) {

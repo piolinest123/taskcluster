@@ -14,7 +14,6 @@ import (
 
 	tcclient "github.com/taskcluster/taskcluster/v29/clients/client-go"
 	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcqueue"
-	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/testutil"
 )
 
 func checkSHA256(t *testing.T, sha256Hex string, file string) {
@@ -44,13 +43,6 @@ func cancelTask(t *testing.T) (td *tcqueue.TaskDefinitionRequest, payload Generi
 		AccessToken: config.AccessToken,
 		ClientID:    config.ClientID,
 		Certificate: config.Certificate,
-	}
-	if os.Getenv("GW_SKIP_PERMA_CREDS_TESTS") != "" {
-		t.Skip("Skipping since GW_SKIP_PERMA_CREDS_TESTS env var is set")
-	}
-	testutil.RequireTaskclusterCredentials(t)
-	if fullCreds.Certificate != "" {
-		t.Fatal("Skipping since I need permanent TC credentials for this test and only have temp creds - set GW_SKIP_PERMA_CREDS_TESTS or GW_SKIP_INTEGRATION_TESTS env var to something to skip this test, or change your TASKCLUSTER_* env vars to a permanent client instead of a temporary client")
 	}
 	td = testTask(t)
 	tempCreds, err := fullCreds.CreateNamedTemporaryCredentials("project/taskcluster:generic-worker-tester/"+t.Name(), time.Minute, "queue:cancel-task:"+td.SchedulerID+"/"+td.TaskGroupID+"/*")
