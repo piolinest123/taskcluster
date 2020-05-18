@@ -37,6 +37,7 @@ import (
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/host"
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/process"
 	gwruntime "github.com/taskcluster/taskcluster/v29/workers/generic-worker/runtime"
+	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/tc"
 	"github.com/xeipuuv/gojsonschema"
 )
 
@@ -58,8 +59,8 @@ var (
 	taskContext = &TaskContext{}
 	// queue is the object we will use for accessing queue api. See
 	// https://docs.taskcluster.net/reference/platform/queue/api-docs
-	queueFactory   func(creds *tcclient.Credentials, rootURL string) Queue
-	queue          Queue
+	queueFactory   func(creds *tcclient.Credentials, rootURL string) tc.Queue
+	queue          tc.Queue
 	config         *gwconfig.Config
 	configProvider gwconfig.Provider
 	Features       []Feature
@@ -161,7 +162,7 @@ func main() {
 			provider = AZURE_PROVIDER
 		}
 
-		queueFactory = func(creds *tcclient.Credentials, rootURL string) Queue {
+		queueFactory = func(creds *tcclient.Credentials, rootURL string) tc.Queue {
 			return tcqueue.New(creds, rootURL)
 		}
 

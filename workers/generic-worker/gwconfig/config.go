@@ -17,6 +17,7 @@ import (
 	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcsecrets"
 	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcworkermanager"
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/fileutil"
+	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/tc"
 )
 
 type (
@@ -159,7 +160,7 @@ func (c *Config) Auth() *tcauth.Auth {
 	return tcauth.New(c.Credentials(), c.RootURL)
 }
 
-func (c *Config) Queue() *tcqueue.Queue {
+func (c *Config) Queue() tc.Queue {
 	return tcqueue.New(c.Credentials(), c.RootURL)
 }
 

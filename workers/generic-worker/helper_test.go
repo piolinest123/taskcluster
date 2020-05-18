@@ -24,6 +24,7 @@ import (
 	tcclient "github.com/taskcluster/taskcluster/v29/clients/client-go"
 	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcqueue"
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/gwconfig"
+	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/tc"
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/tcmock"
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/testutil"
 )
@@ -73,7 +74,7 @@ func setupEnvironment(t *testing.T) (teardown func()) {
 	inAnHour = tcclient.Time(time.Now().Add(time.Hour * 1))
 	globalTestName = t.Name()
 
-	queueFactory = func(creds *tcclient.Credentials, rootURL string) Queue {
+	queueFactory = func(creds *tcclient.Credentials, rootURL string) tc.Queue {
 		return tcmock.NewQueue(t)
 	}
 
