@@ -100,8 +100,7 @@ func setup(t *testing.T) func() {
 	testDir := filepath.Join(testdataDir, t.Name())
 	config = &gwconfig.Config{
 		PrivateConfig: gwconfig.PrivateConfig{
-			AccessToken: os.Getenv("TASKCLUSTER_ACCESS_TOKEN"),
-			Certificate: os.Getenv("TASKCLUSTER_CERTIFICATE"),
+			AccessToken: slugid.Nice(),
 		},
 		PublicConfig: gwconfig.PublicConfig{
 			AvailabilityZone: "outer-space",
@@ -110,7 +109,7 @@ func setup(t *testing.T) func() {
 			CachesDir:                      filepath.Join(cwd, "caches"),
 			CheckForNewDeploymentEverySecs: 0,
 			CleanUpTaskDirs:                false,
-			ClientID:                       os.Getenv("TASKCLUSTER_CLIENT_ID"),
+			ClientID:                       "test-client-id",
 			DeploymentID:                   "",
 			DisableReboots:                 true,
 			// Need common downloads directory across tests, since files
@@ -129,7 +128,7 @@ func setup(t *testing.T) func() {
 			// should be enough for tests, and travis-ci.org CI environments don't
 			// have a lot of free disk
 			RequiredDiskSpaceMegabytes:     16,
-			RootURL:                        os.Getenv("TASKCLUSTER_ROOT_URL"),
+			RootURL:                        "https://fake.root.url",
 			RunAfterUserCreation:           "",
 			SentryProject:                  "generic-worker-tests",
 			ShutdownMachineOnIdle:          false,

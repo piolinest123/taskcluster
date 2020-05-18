@@ -6,12 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/taskcluster/slugid-go/slugid"
 	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcworkermanager"
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/gwconfig"
 )
@@ -45,7 +45,7 @@ func (m *MockAWSProvisionedEnvironment) ValidPublicConfig(t *testing.T) map[stri
 		// should be enough for tests, and travis-ci.org CI environments
 		// don't have a lot of free disk
 		"requiredDiskSpaceMegabytes":     16,
-		"rootURL":                        os.Getenv("TASKCLUSTER_ROOT_URL"),
+		"rootURL":                        "https://fake.aws.prov.root.url",
 		"sentryProject":                  "generic-worker-tests",
 		"shutdownMachineOnIdle":          false,
 		"shutdownMachineOnInternalError": false,
@@ -95,9 +95,9 @@ func (m *MockAWSProvisionedEnvironment) workerTypeDefinition(t *testing.T, w htt
 func (m *MockAWSProvisionedEnvironment) credentials(t *testing.T, w http.ResponseWriter) {
 	resp := map[string]interface{}{
 		"credentials": map[string]string{
-			"clientId":    os.Getenv("TASKCLUSTER_CLIENT_ID"),
-			"certificate": os.Getenv("TASKCLUSTER_CERTIFICATE"),
-			"accessToken": os.Getenv("TASKCLUSTER_ACCESS_TOKEN"),
+			"clientId":    "fake-client-id",
+			"certificate": "fake-cert",
+			"accessToken": slugid.Nice(),
 		},
 		"scopes": []string{},
 	}
