@@ -9,12 +9,10 @@ import (
 	"github.com/taskcluster/httpbackoff/v3"
 	tcclient "github.com/taskcluster/taskcluster/v29/clients/client-go"
 	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcqueue"
-	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/tc"
 )
 
 type Queue struct {
 	t *testing.T
-	a tc.Artifacts
 
 	// tasks["<taskId>"]
 	tasks map[string]*tcqueue.TaskDefinitionAndStatus
@@ -212,11 +210,10 @@ func (queue *Queue) Task(taskId string) (*tcqueue.TaskDefinitionResponse, error)
 
 /////////////////////////////////////////////////
 
-func NewQueue(t *testing.T, artifacts tc.Artifacts) *Queue {
+func NewQueue(t *testing.T) *Queue {
 	return &Queue{
 		t:         t,
 		tasks:     map[string]*tcqueue.TaskDefinitionAndStatus{},
 		artifacts: map[string]map[string]*tcqueue.Artifact{},
-		a:         artifacts,
 	}
 }

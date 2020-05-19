@@ -18,14 +18,13 @@ type ServiceFactory struct {
 }
 
 func NewServiceFactory(t *testing.T) *ServiceFactory {
-	artifacts := NewArtifacts(t)
 	return &ServiceFactory{
 		auth:          NewAuth(t),
-		queue:         NewQueue(t, artifacts),
+		queue:         NewQueue(t),
 		secrets:       NewSecrets(t),
 		purgeCache:    NewPurgeCache(t),
 		workerManager: NewWorkerManager(t),
-		artifacts:     artifacts,
+		artifacts:     NewArtifacts(t),
 	}
 }
 
