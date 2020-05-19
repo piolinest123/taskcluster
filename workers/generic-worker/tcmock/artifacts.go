@@ -12,7 +12,7 @@ type Artifacts struct {
 
 /////////////////////////////////////////////////
 
-func (a *Artifacts) Publish(putURL, contentType, contentEncoding, file string) error {
+func (a *Artifacts) Publish(taskId string, runId uint, name, putURL, contentType, contentEncoding, file string) error {
 	return nil
 }
 

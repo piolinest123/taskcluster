@@ -178,7 +178,7 @@ func (s3Artifact *S3Artifact) ProcessResponse(resp interface{}, task *TaskRun) (
 	transferContentFile := s3Artifact.CreateTempFileForPUTBody()
 	defer os.Remove(transferContentFile)
 
-	return serviceFactory.Artifacts(config.Credentials(), config.RootURL).Publish(response.PutURL, response.ContentType, s3Artifact.ContentEncoding, transferContentFile)
+	return serviceFactory.Artifacts(config.Credentials(), config.RootURL).Publish(task.TaskID, task.RunID, s3Artifact.Name, response.PutURL, response.ContentType, s3Artifact.ContentEncoding, transferContentFile)
 }
 
 func (s3Artifact *S3Artifact) RequestObject() interface{} {

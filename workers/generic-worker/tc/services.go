@@ -46,6 +46,6 @@ type Queue interface {
 }
 
 type Artifacts interface {
-	Publish(putURL, contentType, contentEncoding, file string) error
+	Publish(taskId string, runId uint, name, putURL, contentType, contentEncoding, file string) error
 	GetLatest(taskId, name, file string, timeout time.Duration, logger tclog.Logger) (sha256, contentEncoding, contentType string, err error)
 }

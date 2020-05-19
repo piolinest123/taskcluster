@@ -26,7 +26,7 @@ func NewS3(creds *tcclient.Credentials, rootURL string) *S3 {
 	}
 }
 
-func (s3 *S3) Publish(putURL, contentType, contentEncoding, file string) error {
+func (s3 *S3) Publish(taskId string, runId uint, name, putURL, contentType, contentEncoding, file string) error {
 	// perform http PUT to upload to S3...
 	httpClient := &http.Client{}
 	httpCall := func() (putResp *http.Response, tempError error, permError error) {
