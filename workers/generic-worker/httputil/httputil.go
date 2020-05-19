@@ -11,9 +11,6 @@ import (
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/tclog"
 )
 
-type Logger interface {
-}
-
 // Utility function to aggressively download a url to a file location
 func DownloadFile(url, contentSource, file string, logger tclog.Logger) (sha256, contentType string, err error) {
 	var contentSize int64
