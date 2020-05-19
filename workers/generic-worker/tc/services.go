@@ -9,6 +9,7 @@ import (
 	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcqueue"
 	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcsecrets"
 	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcworkermanager"
+	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/tclog"
 )
 
 type Auth interface {
@@ -42,4 +43,9 @@ type Queue interface {
 	ReportFailed(taskId, runId string) (*tcqueue.TaskStatusResponse, error)
 	Status(taskId string) (*tcqueue.TaskStatusResponse, error)
 	Task(taskId string) (*tcqueue.TaskDefinitionResponse, error)
+}
+
+type Artifacts interface {
+	Publish(putURL, contentType, contentEncoding, file string) error
+	GetLatest(taskId, name, file string, timeout time.Duration, logger tclog.Logger) (sha256, contentEncoding, contentType string, err error)
 }

@@ -107,18 +107,17 @@ func (expectedArtifacts ExpectedArtifacts) Validate(t *testing.T, taskID string,
 		} else {
 			t.Errorf("Artifact '%s' not created", artifact)
 		}
-		b, rawResp, resp, url := getArtifactContent(t, taskID, artifact)
-		defer resp.Body.Close()
+		b, _, actualContentEncoding, actualContentType := getArtifactContent(t, taskID, artifact)
 		for _, requiredSubstring := range expected.Extracts {
 			if !strings.Contains(string(b), requiredSubstring) {
 				t.Errorf("Artifact '%s': Could not find substring %q in '%s'", artifact, requiredSubstring, string(b))
 			}
 		}
-		if actualContentEncoding := rawResp.Header.Get("Content-Encoding"); actualContentEncoding != expected.ContentEncoding {
-			t.Fatalf("Expected Content-Encoding %q but got Content-Encoding %q for artifact %q from url %v", expected.ContentEncoding, actualContentEncoding, artifact, url)
+		if actualContentEncoding != expected.ContentEncoding {
+			t.Fatalf("Expected Content-Encoding %q but got Content-Encoding %q for artifact %q", expected.ContentEncoding, actualContentEncoding, artifact)
 		}
-		if actualContentType := resp.Header.Get("Content-Type"); actualContentType != expected.ContentType {
-			t.Fatalf("Content-Type in Signed URL %v response (%v) does not match Content-Type of artifact (%v)", url, actualContentType, expected.ContentType)
+		if actualContentType != expected.ContentType {
+			t.Fatalf("Content-Type (%v) of artifact %v does not match Content-Type of artifact (%v)", actualContentType, artifact, expected.ContentType)
 		}
 	}
 }

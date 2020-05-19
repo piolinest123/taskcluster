@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	tcclient "github.com/taskcluster/taskcluster/v29/clients/client-go"
-	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/s3"
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/tc"
 )
 
@@ -15,18 +14,18 @@ type ServiceFactory struct {
 	secrets       tc.Secrets
 	purgeCache    tc.PurgeCache
 	workerManager tc.WorkerManager
-	s3            s3.Publisher
+	artifacts     tc.Artifacts
 }
 
 func NewServiceFactory(t *testing.T) *ServiceFactory {
-	publisher := &S3{}
+	artifacts := NewArtifacts(t)
 	return &ServiceFactory{
 		auth:          NewAuth(t),
-		queue:         NewQueue(t, publisher),
+		queue:         NewQueue(t, artifacts),
 		secrets:       NewSecrets(t),
 		purgeCache:    NewPurgeCache(t),
 		workerManager: NewWorkerManager(t),
-		s3:            publisher,
+		artifacts:     artifacts,
 	}
 }
 
@@ -50,6 +49,6 @@ func (sf *ServiceFactory) WorkerManager(creds *tcclient.Credentials, rootURL str
 	return sf.workerManager
 }
 
-func (sf *ServiceFactory) S3() s3.Publisher {
-	return sf.s3
+func (sf *ServiceFactory) Artifacts(creds *tcclient.Credentials, rootURL string) tc.Artifacts {
+	return sf.artifacts
 }

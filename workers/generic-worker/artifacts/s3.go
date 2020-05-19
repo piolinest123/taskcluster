@@ -1,4 +1,4 @@
-package s3
+package artifacts
 
 import (
 	"fmt"
@@ -6,18 +6,27 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"os"
+	"time"
 
 	"github.com/taskcluster/httpbackoff/v3"
+	tcclient "github.com/taskcluster/taskcluster/v29/clients/client-go"
+	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcqueue"
+	tchttputil "github.com/taskcluster/taskcluster/v29/workers/generic-worker/httputil"
+	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/tclog"
 )
 
-type Publisher interface {
-	Publish(putURL, contentType, contentEncoding, file string) error
+type S3 struct {
+	backOffClient *httpbackoff.Client
+	queue         *tcqueue.Queue
 }
 
-type BackoffPublisher struct {
+func NewS3(creds *tcclient.Credentials, rootURL string) *S3 {
+	return &S3{
+		queue: tcqueue.New(creds, rootURL),
+	}
 }
 
-func (b *BackoffPublisher) Publish(putURL, contentType, contentEncoding, file string) error {
+func (s3 *S3) Publish(putURL, contentType, contentEncoding, file string) error {
 	// perform http PUT to upload to S3...
 	httpClient := &http.Client{}
 	httpCall := func() (putResp *http.Response, tempError error, permError error) {
@@ -62,7 +71,14 @@ func (b *BackoffPublisher) Publish(putURL, contentType, contentEncoding, file st
 		}
 		return
 	}
-	putResp, putAttempts, err := httpbackoff.Retry(httpCall)
+	var putResp *http.Response
+	var putAttempts int
+	var err error
+	if s3.backOffClient == nil {
+		putResp, putAttempts, err = httpbackoff.Retry(httpCall)
+	} else {
+		putResp, putAttempts, err = s3.backOffClient.Retry(httpCall)
+	}
 	log.Printf("%v put requests issued to %v", putAttempts, putURL)
 	if putResp != nil {
 		defer putResp.Body.Close()
@@ -75,4 +91,14 @@ func (b *BackoffPublisher) Publish(putURL, contentType, contentEncoding, file st
 		}
 	}
 	return err
+}
+
+func (s3 *S3) GetLatest(taskId, name, file string, timeout time.Duration, taskLogger tclog.Logger) (sha256, contentEncoding, contentType string, err error) {
+	u, err := s3.queue.GetLatestArtifact_SignedURL(taskId, name, timeout)
+	if err != nil {
+		return "", "", "", err
+	}
+	sha256, contentType, err = tchttputil.DownloadFile(u.String(), "task "+taskId+" artifact "+name, file, taskLogger)
+	contentEncoding = "unknown"
+	return
 }

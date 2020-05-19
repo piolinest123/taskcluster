@@ -9,8 +9,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net"
-	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -280,29 +278,25 @@ func testTask(t *testing.T) *tcqueue.TaskDefinitionRequest {
 	}
 }
 
-func getArtifactContent(t *testing.T, taskID string, artifact string) ([]byte, *http.Response, *http.Response, *url.URL) {
-	url, err := queue.GetLatestArtifact_SignedURL(taskID, artifact, 10*time.Minute)
+func getArtifactContent(t *testing.T, taskID string, artifact string) (data []byte, sha256, contentEncoding, contentType string) {
+	tempFile, err := ioutil.TempFile("", slugid.Nice())
 	if err != nil {
-		t.Fatalf("Error trying to fetch artifacts from Amazon...\n%s", err)
+		t.Fatalf("Error creating temp file: %v", err)
 	}
-	// need to do this so Content-Encoding header isn't swallowed by Go for test later on
-	tr := &http.Transport{
-		DisableCompression: true,
-	}
-	client := &http.Client{Transport: tr}
-	rawResp, _, err := httpbackoff.ClientGet(client, url.String())
+	defer func() {
+		if err = os.Remove(tempFile.Name()); err != nil {
+			t.Fatalf("Error removing temp file %v: %v", tempFile.Name(), err)
+		}
+	}()
+	sha256, contentEncoding, contentType, err = serviceFactory.Artifacts(nil, "").GetLatest(taskID, artifact, tempFile.Name(), 10*time.Minute, nil)
 	if err != nil {
-		t.Fatalf("Error trying to fetch decompressed artifact from signed URL %s ...\n%s", url.String(), err)
+		t.Fatalf("Error fetching downloading artifact %v from task %v to file %v: %v", artifact, taskID, tempFile.Name(), err)
 	}
-	resp, _, err := httpbackoff.Get(url.String())
+	data, err = ioutil.ReadFile(tempFile.Name())
 	if err != nil {
-		t.Fatalf("Error trying to fetch artifact from signed URL %s ...\n%s", url.String(), err)
+		t.Fatalf("Error reading temp file: %v", err)
 	}
-	b, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		t.Fatalf("Error trying to read response body of artifact from signed URL %s ...\n%s", url.String(), err)
-	}
-	return b, rawResp, resp, url
+	return
 }
 
 func ensureResolution(t *testing.T, taskID, state, reason string) {
