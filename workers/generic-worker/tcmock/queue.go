@@ -11,10 +11,15 @@ import (
 
 type Queue struct {
 	t *testing.T
-	// mapping from taskId to task definition and status
+
+	// key: "<taskId>"
 	tasks map[string]*tcqueue.TaskDefinitionAndStatus
-	// mapping from <taskId>:<runId> to mapping from artifact name to artifact
-	artifacts map[string]map[string]*tcqueue.Artifact
+
+	// key: "<taskId>:<runId>:<name>"
+	artifacts map[string]*tcqueue.Artifact
+
+	// key: "<taskId>:<runId>:<name>"
+	artifactContent map[string][]byte
 }
 
 /////////////////////////////////////////////////
@@ -49,15 +54,12 @@ func (queue *Queue) ClaimWork(provisionerId, workerType string, payload *tcqueue
 }
 
 func (queue *Queue) CreateArtifact(taskId, runId, name string, payload *tcqueue.PostArtifactRequest) (*tcqueue.PostArtifactResponse, error) {
-	if _, ok := queue.artifacts[taskId+":"+runId]; !ok {
-		queue.artifacts[taskId+":"+runId] = map[string]*tcqueue.Artifact{}
-	}
 	var request tcqueue.Artifact
 	err := json.Unmarshal([]byte(*payload), &request)
 	if err != nil {
 		queue.t.Fatalf("Error unmarshalling from json: %v", err)
 	}
-	queue.artifacts[taskId+":"+runId][name] = &request
+	queue.artifacts[taskId+":"+runId+":"+name] = &request
 	var response interface{}
 	switch request.StorageType {
 	case "s3":
@@ -187,10 +189,9 @@ func (queue *Queue) Task(taskId string) (*tcqueue.TaskDefinitionResponse, error)
 /////////////////////////////////////////////////
 
 func NewQueue(t *testing.T) *Queue {
-	q := &Queue{
+	return &Queue{
 		t:         t,
 		tasks:     map[string]*tcqueue.TaskDefinitionAndStatus{},
-		artifacts: map[string]map[string]*tcqueue.Artifact{},
+		artifacts: map[string]*tcqueue.Artifact{},
 	}
-	return q
 }
