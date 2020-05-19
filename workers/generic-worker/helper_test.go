@@ -23,6 +23,7 @@ import (
 	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcqueue"
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/gwconfig"
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/tc"
+	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/tclog"
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/tcmock"
 )
 
@@ -288,7 +289,7 @@ func getArtifactContent(t *testing.T, taskID string, artifact string) (data []by
 			t.Fatalf("Error removing temp file %v: %v", tempFile.Name(), err)
 		}
 	}()
-	sha256, contentEncoding, contentType, err = serviceFactory.Artifacts(nil, "").GetLatest(taskID, artifact, tempFile.Name(), 10*time.Minute, nil)
+	sha256, contentEncoding, contentType, err = serviceFactory.Artifacts(nil, "").GetLatest(taskID, artifact, tempFile.Name(), 10*time.Minute, tclog.DevNull{})
 	if err != nil {
 		t.Fatalf("Error fetching downloading artifact %v from task %v to file %v: %v", artifact, taskID, tempFile.Name(), err)
 	}
