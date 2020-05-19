@@ -1,7 +1,11 @@
 package tcmock
 
 import (
+	"bytes"
+	"compress/gzip"
+	"io"
 	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
@@ -44,8 +48,7 @@ func (a *Artifacts) Publish(taskId string, runId uint, name, putURL, contentType
 
 func (a *Artifacts) GetLatest(taskId, name, file string, timeout time.Duration, logger tclog.Logger) (sha256, contentEncoding, contentType string, err error) {
 	artifact := a.artifacts[taskId+":"+name]
-	err = ioutil.WriteFile(file, artifact.data, 0777)
-	if err != nil {
+	if err = artifact.WriteToDisk(file); err != nil {
 		return
 	}
 	sha256, err = fileutil.CalculateSHA256(file)
@@ -54,6 +57,28 @@ func (a *Artifacts) GetLatest(taskId, name, file string, timeout time.Duration, 
 	}
 	contentEncoding = artifact.contentEncoding
 	contentType = artifact.contentType
+	return
+}
+
+func (artifact *Artifact) WriteToDisk(file string) (err error) {
+	if artifact.contentEncoding == "gzip" {
+		var zr *gzip.Reader
+		var f *os.File
+		f, err = os.Create(file)
+		if err != nil {
+			return
+		}
+		defer func() {
+			err2 := f.Close()
+			if err == nil {
+				err = err2
+			}
+		}()
+		zr, err = gzip.NewReader(bytes.NewBuffer(artifact.data))
+		_, err = io.Copy(f, zr)
+	} else {
+		err = ioutil.WriteFile(file, artifact.data, 0777)
+	}
 	return
 }
 
