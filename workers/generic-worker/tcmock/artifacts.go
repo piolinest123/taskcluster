@@ -48,19 +48,24 @@ func (a *Artifacts) Publish(taskId string, runId uint, name, putURL, contentType
 
 func (a *Artifacts) GetLatest(taskId, name, file string, timeout time.Duration, logger tclog.Logger) (sha256, contentEncoding, contentType string, err error) {
 	artifact := a.artifacts[taskId+":"+name]
-	if err = artifact.WriteToDisk(file); err != nil {
+	contentSource := "task " + taskId + " artifact " + name
+	logger.Infof("[mounts] Downloading %v to %v", contentSource, file)
+	var size int64
+	size, err = artifact.WriteToDisk(file)
+	if err != nil {
 		return
 	}
 	sha256, err = fileutil.CalculateSHA256(file)
 	if err != nil {
 		return
 	}
+	logger.Infof("[mounts] Downloaded %v bytes with SHA256 %v from %v to %v", size, sha256, contentSource, file)
 	contentEncoding = artifact.contentEncoding
 	contentType = artifact.contentType
 	return
 }
 
-func (artifact *Artifact) WriteToDisk(file string) (err error) {
+func (artifact *Artifact) WriteToDisk(file string) (size int64, err error) {
 	if artifact.contentEncoding == "gzip" {
 		var zr *gzip.Reader
 		var f *os.File
@@ -75,8 +80,9 @@ func (artifact *Artifact) WriteToDisk(file string) (err error) {
 			}
 		}()
 		zr, err = gzip.NewReader(bytes.NewBuffer(artifact.data))
-		_, err = io.Copy(f, zr)
+		size, err = io.Copy(f, zr)
 	} else {
+		size = int64(len(artifact.data))
 		err = ioutil.WriteFile(file, artifact.data, 0777)
 	}
 	return
