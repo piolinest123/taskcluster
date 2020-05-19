@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/taskcluster/httpbackoff/v3"
+	tcclient "github.com/taskcluster/taskcluster/v29/clients/client-go"
 	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcqueue"
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/tc"
 )
@@ -185,6 +187,14 @@ func (queue *Queue) Status(taskId string) (*tcqueue.TaskStatusResponse, error) {
 }
 
 func (queue *Queue) Task(taskId string) (*tcqueue.TaskDefinitionResponse, error) {
+	if _, exists := queue.tasks[taskId]; !exists {
+		queue.t.Log("Returning error")
+		return nil, &tcclient.APICallException{
+			RootCause: httpbackoff.BadHttpResponseCode{
+				HttpResponseCode: 404,
+			},
+		}
+	}
 	return &queue.tasks[taskId].Task, nil
 }
 
