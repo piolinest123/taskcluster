@@ -16,13 +16,13 @@ type Queue struct {
 	t *testing.T
 	a tc.Artifacts
 
-	// key: "<taskId>"
+	// tasks["<taskId>"]
 	tasks map[string]*tcqueue.TaskDefinitionAndStatus
 
-	// key: "<taskId>:<runId>:<name>"
-	artifacts map[string]*tcqueue.Artifact
+	// artifacts["<taskId>:<runId>"]["<name>"]
+	artifacts map[string]map[string]*tcqueue.Artifact
 
-	// key: "<taskId>:<runId>:<name>"
+	// artifactContent["<taskId>:<runId>:<name>"]
 	artifactContent map[string][]byte
 }
 
@@ -63,7 +63,10 @@ func (queue *Queue) CreateArtifact(taskId, runId, name string, payload *tcqueue.
 	if err != nil {
 		queue.t.Fatalf("Error unmarshalling from json: %v", err)
 	}
-	queue.artifacts[taskId+":"+runId+":"+name] = &request
+	if _, exists := queue.artifacts[taskId+":"+runId]; !exists {
+		queue.artifacts[taskId+":"+runId] = map[string]*tcqueue.Artifact{}
+	}
+	queue.artifacts[taskId+":"+runId][name] = &request
 	var response interface{}
 	switch request.StorageType {
 	case "s3":
@@ -151,15 +154,24 @@ func (queue *Queue) CreateTask(taskId string, payload *tcqueue.TaskDefinitionReq
 }
 
 func (queue *Queue) GetLatestArtifact_SignedURL(taskId, name string, duration time.Duration) (*url.URL, error) {
+	// Returned URL only used for uploading artifacts, which is also mocked with URL ignored
 	return &url.URL{}, nil
 }
 
 func (queue *Queue) ListArtifacts(taskId, runId, continuationToken, limit string) (*tcqueue.ListArtifactsResponse, error) {
-	return &tcqueue.ListArtifactsResponse{}, nil
+	artifacts := []tcqueue.Artifact{}
+	for _, a := range queue.artifacts[taskId] {
+		artifacts = append(artifacts, *a)
+	}
+	return &tcqueue.ListArtifactsResponse{
+		Artifacts: artifacts,
+	}, nil
 }
 
 func (queue *Queue) ReclaimTask(taskId, runId string) (*tcqueue.TaskReclaimResponse, error) {
-	return &tcqueue.TaskReclaimResponse{}, nil
+	return &tcqueue.TaskReclaimResponse{
+		Status: queue.tasks[taskId].Status,
+	}, nil
 }
 
 func (queue *Queue) ReportCompleted(taskId, runId string) (*tcqueue.TaskStatusResponse, error) {
@@ -204,7 +216,7 @@ func NewQueue(t *testing.T, artifacts tc.Artifacts) *Queue {
 	return &Queue{
 		t:         t,
 		tasks:     map[string]*tcqueue.TaskDefinitionAndStatus{},
-		artifacts: map[string]*tcqueue.Artifact{},
+		artifacts: map[string]map[string]*tcqueue.Artifact{},
 		a:         artifacts,
 	}
 }
