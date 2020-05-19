@@ -591,7 +591,6 @@ func ClaimWork() *TaskRun {
 	// Store local clock time when claiming, rather than queue's claim time, to
 	// avoid problems with clock skew.
 	localClaimTime := time.Now()
-	log.Printf("CLAIM WORK: %T", queue)
 	resp, err := queue.ClaimWork(config.ProvisionerID, config.WorkerType, req)
 	if err != nil {
 		log.Printf("Could not claim work. %v", err)

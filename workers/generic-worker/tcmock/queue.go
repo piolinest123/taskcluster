@@ -1,6 +1,7 @@
 package tcmock
 
 import (
+	"encoding/json"
 	"net/url"
 	"testing"
 	"time"
@@ -9,8 +10,11 @@ import (
 )
 
 type Queue struct {
-	t     *testing.T
+	t *testing.T
+	// mapping from taskId to task definition and status
 	tasks map[string]*tcqueue.TaskDefinitionAndStatus
+	// mapping from <taskId>:<runId> to mapping from artifact name to artifact
+	artifacts map[string]map[string]*tcqueue.Artifact
 }
 
 /////////////////////////////////////////////////
@@ -45,7 +49,56 @@ func (queue *Queue) ClaimWork(provisionerId, workerType string, payload *tcqueue
 }
 
 func (queue *Queue) CreateArtifact(taskId, runId, name string, payload *tcqueue.PostArtifactRequest) (*tcqueue.PostArtifactResponse, error) {
-	return &tcqueue.PostArtifactResponse{}, nil
+	if _, ok := queue.artifacts[taskId+":"+runId]; !ok {
+		queue.artifacts[taskId+":"+runId] = map[string]*tcqueue.Artifact{}
+	}
+	var request tcqueue.Artifact
+	err := json.Unmarshal([]byte(*payload), &request)
+	if err != nil {
+		queue.t.Fatalf("Error unmarshalling from json: %v", err)
+	}
+	queue.artifacts[taskId+":"+runId][name] = &request
+	var response interface{}
+	switch request.StorageType {
+	case "s3":
+		var s3Request tcqueue.S3ArtifactRequest
+		err := json.Unmarshal([]byte(*payload), &s3Request)
+		if err != nil {
+			queue.t.Fatalf("Error unmarshalling S3 Artifact Request from json: %v", err)
+		}
+		response = tcqueue.S3ArtifactResponse{
+			ContentType: s3Request.ContentType,
+			Expires:     s3Request.Expires,
+			PutURL:      "http://localhost:12453",
+			StorageType: s3Request.StorageType,
+		}
+	case "error":
+		var errorRequest tcqueue.ErrorArtifactRequest
+		err := json.Unmarshal([]byte(*payload), &errorRequest)
+		if err != nil {
+			queue.t.Fatalf("Error unmarshalling Error Artifact Request from json: %v", err)
+		}
+		response = tcqueue.ErrorArtifactResponse{
+			StorageType: errorRequest.StorageType,
+		}
+	case "reference":
+		var redirectRequest tcqueue.RedirectArtifactRequest
+		err := json.Unmarshal([]byte(*payload), &redirectRequest)
+		if err != nil {
+			queue.t.Fatalf("Error unmarshalling Redirect Artifact Request from json: %v", err)
+		}
+		response = tcqueue.RedirectArtifactResponse{
+			StorageType: redirectRequest.StorageType,
+		}
+	default:
+		queue.t.Fatalf("Unrecognised storage type: %v", request.StorageType)
+	}
+	var par tcqueue.PostArtifactResponse
+	par, err = json.Marshal(response)
+	if err != nil {
+		queue.t.Fatalf("Error marshalling into json: %v", err)
+	}
+	return &par, nil
 }
 
 func (queue *Queue) CreateTask(taskId string, payload *tcqueue.TaskDefinitionRequest) (*tcqueue.TaskStatusResponse, error) {
@@ -135,8 +188,9 @@ func (queue *Queue) Task(taskId string) (*tcqueue.TaskDefinitionResponse, error)
 
 func NewQueue(t *testing.T) *Queue {
 	q := &Queue{
-		t:     t,
-		tasks: map[string]*tcqueue.TaskDefinitionAndStatus{},
+		t:         t,
+		tasks:     map[string]*tcqueue.TaskDefinitionAndStatus{},
+		artifacts: map[string]map[string]*tcqueue.Artifact{},
 	}
 	return q
 }
