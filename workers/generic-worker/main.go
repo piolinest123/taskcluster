@@ -1139,7 +1139,7 @@ func (task *TaskRun) closeLog(logHandle io.WriteCloser) {
 }
 
 func PrepareTaskEnvironment() (reboot bool) {
-	taskDirName := "task_" + strconv.Itoa(int(time.Now().UnixNano()))
+	taskDirName := fmt.Sprintf("task_%v", time.Now().UnixNano())
 	if PlatformTaskEnvironmentSetup(taskDirName) {
 		return true
 	}
