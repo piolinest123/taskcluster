@@ -7,6 +7,7 @@ import (
 	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcqueue"
 	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcsecrets"
 	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcworkermanager"
+	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/s3"
 )
 
 type ServiceFactory interface {
@@ -15,6 +16,7 @@ type ServiceFactory interface {
 	PurgeCache(creds *tcclient.Credentials, rootURL string) PurgeCache
 	Secrets(creds *tcclient.Credentials, rootURL string) Secrets
 	WorkerManager(creds *tcclient.Credentials, rootURL string) WorkerManager
+	S3() s3.Publisher
 }
 
 type ClientFactory struct {
@@ -38,4 +40,8 @@ func (cf *ClientFactory) Secrets(creds *tcclient.Credentials, rootURL string) Se
 
 func (cf *ClientFactory) WorkerManager(creds *tcclient.Credentials, rootURL string) WorkerManager {
 	return tcworkermanager.New(creds, rootURL)
+}
+
+func (cf *ClientFactory) S3() s3.Publisher {
+	return &s3.BackoffPublisher{}
 }

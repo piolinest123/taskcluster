@@ -7,10 +7,12 @@ import (
 	"time"
 
 	"github.com/taskcluster/taskcluster/v29/clients/client-go/tcqueue"
+	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/s3"
 )
 
 type Queue struct {
-	t *testing.T
+	t         *testing.T
+	publisher s3.Publisher
 
 	// key: "<taskId>"
 	tasks map[string]*tcqueue.TaskDefinitionAndStatus
@@ -188,10 +190,11 @@ func (queue *Queue) Task(taskId string) (*tcqueue.TaskDefinitionResponse, error)
 
 /////////////////////////////////////////////////
 
-func NewQueue(t *testing.T) *Queue {
+func NewQueue(t *testing.T, publisher s3.Publisher) *Queue {
 	return &Queue{
 		t:         t,
 		tasks:     map[string]*tcqueue.TaskDefinitionAndStatus{},
 		artifacts: map[string]*tcqueue.Artifact{},
+		publisher: publisher,
 	}
 }
