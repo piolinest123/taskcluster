@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/taskcluster/httpbackoff/v3"
+	tcclient "github.com/taskcluster/taskcluster/v29/clients/client-go"
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/fileutil"
 	"github.com/taskcluster/taskcluster/v29/workers/generic-worker/tclog"
 )
@@ -47,6 +49,14 @@ func (a *Artifacts) Publish(taskId string, runId uint, name, putURL, contentType
 }
 
 func (a *Artifacts) GetLatest(taskId, name, file string, timeout time.Duration, logger tclog.Logger) (sha256, contentEncoding, contentType string, err error) {
+	if _, exists := a.artifacts[taskId+":"+name]; !exists {
+		a.t.Log("Returning error")
+		return "", "", "", &tcclient.APICallException{
+			RootCause: httpbackoff.BadHttpResponseCode{
+				HttpResponseCode: 404,
+			},
+		}
+	}
 	artifact := a.artifacts[taskId+":"+name]
 	contentSource := "task " + taskId + " artifact " + name
 	logger.Infof("[mounts] Downloading %v to %v", contentSource, file)
